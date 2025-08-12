@@ -4,6 +4,10 @@ import { router } from '@kit.ArkUI';
 import { PWAManager, PWAInfo } from '../util/PWAManager';
 import { common } from '@kit.AbilityKit';
 
+interface ExtendedObject {
+  onPWADetected: (pwaInfoStr: string) => void;
+}
+
 @Entry
 @Component
 struct PWAStore {
@@ -55,7 +59,7 @@ struct PWAStore {
   }
   
   // Extended object for PWA detection
-  extObj = {
+  extObj: ExtendedObject = {
     onPWADetected: (pwaInfoStr: string) => {
       try {
         const pwaInfo: PWAInfo = JSON.parse(pwaInfoStr);
@@ -166,16 +170,7 @@ struct PWAStore {
           this.controller.runJavaScript(this.pwaDetectionScript)
             .then(() => {
               console.log('PWA detection script injected successfully');
-            })
-            .catch((error) => {
-              console.error('Error injecting PWA detection script:', error);
             });
-        })
-        .onUrlLoadIntercept((event) => {
-          // Intercept navigation to PWA sites for detection
-          const url = event.data.toString();
-          console.log('Navigating to:', url);
-          return false; // Allow navigation
         })
         .width('100%')
         .layoutWeight(1)

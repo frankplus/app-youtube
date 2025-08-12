@@ -115,7 +115,7 @@ struct InstalledPWAs {
       } else {
         // PWA List
         List({ space: 8 }) {
-          ForEach(this.installedPWAs, (pwa: PWAInfo, index: number) => {
+          ForEach(this.installedPWAs, (pwa: PWAInfo) => {
             ListItem() {
               Row() {
                 // PWA Icon
@@ -203,28 +203,11 @@ struct InstalledPWAs {
                 offsetY: 2
               })
             }
-            .swipeAction({
-              end: {
-                builder: () => {
-                  Row() {
-                    Button('Delete')
-                      .onClick(() => this.uninstallPWA(pwa.url, pwa.name))
-                      .backgroundColor('#FF3B30')
-                      .fontColor(Color.White)
-                      .width(80)
-                      .height('100%')
-                  }
-                  .height('100%')
-                }
-              }
-            })
-          }, (pwa: PWAInfo) => pwa.url)
+          })
         }
         .layoutWeight(1)
         .padding({ left: 16, right: 16, top: 8 })
       }
     }
-    .height('100%')
-    .backgroundColor('#f0f0f0')
   }
 }
