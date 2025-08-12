@@ -2,27 +2,27 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "module description"
+      "value": "PWA Store - Discover and manage Progressive Web Apps"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "description"
+      "value": "Progressive Web App Store for OpenHarmony"
     },
     {
       "name": "EntryAbility_label",
-      "value": "WebApp"
+      "value": "PWA Store"
     },
     {
       "name": "permission_reason_media_location",
-      "value": ""
+      "value": "Access media location for PWA resources"
     },
     {
       "name": "permission_reason_write_media",
-      "value": ""
+      "value": "Store PWA data and resources"
     },
     {
       "name": "permission_reason_read_media",
-      "value": ""
+      "value": "Access PWA media and resources"
     }
   ]
 }

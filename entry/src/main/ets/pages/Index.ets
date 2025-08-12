@@ -1,19 +1,9 @@
 import  deviceInfo  from '@ohos.deviceInfo'
 import { webview } from '@kit.ArkWeb';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { KeyCode } from '@kit.InputKit';
-
-// no User Agent, test
-// https://tool.lu/useragent
-// Mozilla/5.0 (X11; Linux aarch64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.88 Mobile Safari/537.36
-
-// User Agent set in the offcial browser
-// const PAD_USER_AGENT: string = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTMl, like Gecko) Chrome/92.0.4515.105 Safari/537.36'
-// const PHONE_USER_AGENT: string = 'Mozilla/5.0 (Linux; Android 9; VRD-AL10; HMSCore 6.3.0.331) AppleWebKit/537.36 (KHTMl, like Gecko) Chrome/92.0.4515.105 HuaweiBrowser/12.0.4.1 Mobile Safari/537.36'
-
-// User Agent modification from westinyang
-const PAD_USER_AGENT: string = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTMl, like Gecko) Chrome/99.0.4844.88 Safari/537.36'
-const PHONE_USER_AGENT: string = 'Mozilla/5.0 (Linux; Android 10.0; ohos) AppleWebKit/537.36 (KHTMl, like Gecko) Chrome/99.0.4844.88 HuaweiBrowser/13.0.4.302 Mobile Safari/537.36'
+import { router } from '@kit.ArkUI';
+import { PWAManager, PWAInfo } from '../util/PWAManager';
+import { common } from '@kit.AbilityKit';
 
 // Define the interface for the extended object
 interface ExtObject {
@@ -31,71 +21,156 @@ struct Index {
     }
   };
   controller: webview.WebviewController = new webview.WebviewController()
+  @State currentUrl: string = '';
+  @State showPWAView: boolean = false;
+  @State currentPWAInfo: PWAInfo | null = null;
+  
+  private pwaManager = PWAManager.getInstance();
 
   aboutToAppear() {
     webview.WebviewController.initializeWebEngine();
-    // Warm up the Service Worker for faster PWA start
-    try {
-      webview.WebviewController.warmupServiceWorker('https://2048.love2dev.com/');
-    } catch (e) {
-      console.warn(`Service Worker warmup failed: ${JSON.stringify(e)}`);
+    
+    // Check if we're opening a specific PWA
+    const params = router.getParams() as Record<string, string>;
+    if (params && params.pwaUrl) {
+      this.currentUrl = params.pwaUrl;
+      this.showPWAView = true;
+      this.loadPWAInfo(params.pwaUrl);
+    } else {
+      // Default behavior - navigate to PWA Store
+      this.navigateToPWAStore();
     }
+  }
+  
+  async loadPWAInfo(url: string) {
+    const context = getContext(this) as common.UIAbilityContext;
+    const installedPWAs = await this.pwaManager.getInstalledPWAs(context);
+    this.currentPWAInfo = installedPWAs.find(pwa => pwa.url === url) || null;
+  }
+  
+  navigateToPWAStore() {
+    router.replaceUrl({
+      url: 'pages/PWAStore'
+    });
+  }
+  
+  navigateToInstalledPWAs() {
+    router.pushUrl({
+      url: 'pages/InstalledPWAs'
+    });
   }
 
   build() {
     Column() {
-
-      Row() {
-        Text('PWA App')
-          .fontSize(18)
-          .fontWeight(FontWeight.Medium)
-          .padding(12)
-        Blank()
-        Button('Reload')
-          .onClick(() => this.controller.refresh())
-          .margin({ right: 8 })
-      }
-      .backgroundColor('#b5b5b5ff')
-      .width('100%')
-    
-      /* Load local web pages */
-      // Web({ src: $rawfile("index.html"), controller: this.controller })
-
-      /* Load online web pages */
-      Web({ src: 'https://2048.love2dev.com/', controller: this.controller })
-        .zoomAccess(false)
-        .mediaPlayGestureAccess(true)
-        .horizontalScrollBarAccess(false)
-        .verticalScrollBarAccess(false)
-        .fileAccess(true)
-        .imageAccess(true)
-        .onlineImageAccess(true)
-        .domStorageAccess(true)
-        .databaseAccess(true)
-        .cacheMode(CacheMode.Default)
-        .javaScriptAccess(true)
-        .javaScriptProxy({
-          object: this.extObj,
-          name: "extObj",
-          methodList: ["test"],
-          controller: this.controller,
-        })
-        .onPageBegin((event) => {
-          hilog.info(0x0, '[Index]', `onPageBegin= ${JSON.stringify(event)}`)
-        })
-        .onPageEnd((event) => {
-          hilog.info(0x0, '[Index]', `onPageEnd= ${JSON.stringify(event)}`)
-          // register browser object
-          // this.controller.registerJavaScriptProxy(this.extObj, 'extObj', ['test'])
-          // run js
-          // this.controller.runJavaScript("jsMethodName(params)")
-        })
-        .onProgressChange((event) => {
-          hilog.info(0x0, '[Index]', `onProgressChange`)
-        })
-        .width('100%')
+      if (!this.showPWAView) {
+        // Show navigation to PWA Store
+        Column() {
+          Image($r('app.media.app_icon'))
+            .width(120)
+            .height(120)
+            .margin({ top: 80, bottom: 40 })
+          
+          Text('PWA Store')
+            .fontSize(28)
+            .fontWeight(FontWeight.Bold)
+            .margin({ bottom: 16 })
+          
+          Text('Discover and manage Progressive Web Apps')
+            .fontSize(16)
+            .fontColor('#666666')
+            .textAlign(TextAlign.Center)
+            .margin({ bottom: 40, left: 32, right: 32 })
+          
+          Button('Open PWA Store')
+            .onClick(() => this.navigateToPWAStore())
+            .backgroundColor('#007AFF')
+            .fontColor(Color.White)
+            .fontSize(18)
+            .width(200)
+            .height(50)
+            .margin({ bottom: 20 })
+          
+          Button('My Installed PWAs')
+            .onClick(() => this.navigateToInstalledPWAs())
+            .backgroundColor('#34C759')
+            .fontColor(Color.White)
+            .fontSize(16)
+            .width(200)
+            .height(44)
+        }
+        .justifyContent(FlexAlign.Center)
+        .alignItems(HorizontalAlign.Center)
         .height('100%')
-        .backgroundColor('#ffffff')
+        .backgroundColor('#f8f8f8')
+      } else {
+        // Show PWA viewer
+        Row() {
+          Button('← Back')
+            .onClick(() => router.back())
+            .backgroundColor('#007AFF')
+            .fontColor(Color.White)
+            .margin({ left: 8 })
+          
+          Column() {
+            if (this.currentPWAInfo) {
+              Text(this.currentPWAInfo.name)
+                .fontSize(16)
+                .fontWeight(FontWeight.Medium)
+                .maxLines(1)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
+            } else {
+              Text('PWA App')
+                .fontSize(16)
+                .fontWeight(FontWeight.Medium)
+            }
+          }
+          .padding(12)
+          .layoutWeight(1)
+          
+          Button('Reload')
+            .onClick(() => this.controller.refresh())
+            .margin({ right: 8 })
+        }
+        .backgroundColor('#f5f5f5')
+        .width('100%')
+
+        /* Load PWA URL */
+        Web({ src: this.currentUrl || 'https://2048.love2dev.com/', controller: this.controller })
+          .zoomAccess(false)
+          .mediaPlayGestureAccess(true)
+          .horizontalScrollBarAccess(false)
+          .verticalScrollBarAccess(false)
+          .fileAccess(true)
+          .imageAccess(true)
+          .onlineImageAccess(true)
+          .domStorageAccess(true)
+          .databaseAccess(true)
+          .cacheMode(CacheMode.Default)
+          .javaScriptAccess(true)
+          .javaScriptProxy({
+            object: this.extObj,
+            name: "extObj",
+            methodList: ["test"],
+            controller: this.controller,
+          })
+          .onPageBegin((event) => {
+            hilog.info(0x0, '[Index]', `onPageBegin= ${JSON.stringify(event)}`)
+          })
+          .onPageEnd((event) => {
+            hilog.info(0x0, '[Index]', `onPageEnd= ${JSON.stringify(event)}`)
+            // register browser object
+            // this.controller.registerJavaScriptProxy(this.extObj, 'extObj', ['test'])
+            // run js
+            // this.controller.runJavaScript("jsMethodName(params)")
+          })
+          .onProgressChange((event) => {
+            hilog.info(0x0, '[Index]', `onProgressChange`)
+          })
+          .width('100%')
+          .layoutWeight(1)
+          .backgroundColor('#ffffff')
+      }
     }
+    .height('100%')
   }
 }
