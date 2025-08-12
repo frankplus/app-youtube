@@ -1,6 +1,7 @@
 import  deviceInfo  from '@ohos.deviceInfo'
 import { webview } from '@kit.ArkWeb';
 import { hilog } from '@kit.PerformanceAnalysisKit';
+import { KeyCode } from '@kit.InputKit';
 
 // no User Agent, test
 // https://tool.lu/useragent
@@ -29,16 +30,39 @@ struct Index {
       return "test " + str;
     }
   };
-  @State isPhone: boolean = false
   controller: webview.WebviewController = new webview.WebviewController()
+
+  aboutToAppear() {
+    webview.WebviewController.initializeWebEngine();
+    // Warm up the Service Worker for faster PWA start
+    try {
+      webview.WebviewController.warmupServiceWorker('https://2048.love2dev.com/');
+    } catch (e) {
+      console.warn(`Service Worker warmup failed: ${JSON.stringify(e)}`);
+    }
+  }
 
   build() {
     Column() {
+
+      Row() {
+        Text('PWA App')
+          .fontSize(18)
+          .fontWeight(FontWeight.Medium)
+          .padding(12)
+        Blank()
+        Button('Reload')
+          .onClick(() => this.controller.refresh())
+          .margin({ right: 8 })
+      }
+      .backgroundColor('#b5b5b5ff')
+      .width('100%')
+    
       /* Load local web pages */
       // Web({ src: $rawfile("index.html"), controller: this.controller })
 
       /* Load online web pages */
-      Web({ src: 'https://m.youtube.com/', controller: this.controller })
+      Web({ src: 'https://2048.love2dev.com/', controller: this.controller })
         .zoomAccess(false)
         .mediaPlayGestureAccess(true)
         .horizontalScrollBarAccess(false)
@@ -47,7 +71,8 @@ struct Index {
         .imageAccess(true)
         .onlineImageAccess(true)
         .domStorageAccess(true)
-        .databaseAccess(true)// .cacheMode(CacheMode.Default)
+        .databaseAccess(true)
+        .cacheMode(CacheMode.Default)
         .javaScriptAccess(true)
         .javaScriptProxy({
           object: this.extObj,
@@ -55,7 +80,6 @@ struct Index {
           methodList: ["test"],
           controller: this.controller,
         })
-        .userAgent(this.isPhone ? PHONE_USER_AGENT : PAD_USER_AGENT)
         .onPageBegin((event) => {
           hilog.info(0x0, '[Index]', `onPageBegin= ${JSON.stringify(event)}`)
         })
@@ -72,19 +96,6 @@ struct Index {
         .width('100%')
         .height('100%')
         .backgroundColor('#ffffff')
-    }
-  }
-
-  aboutToAppear() {
-    try {
-      let deviceType:string  = deviceInfo.deviceType;
-      console.log(`device type:${deviceType}`)
-      //  default is considered as phone
-      if (deviceType === 'phone' || deviceType === 'default') {
-        this.isPhone = true
-      }
-    } catch (e) {
-      hilog.info(0x0, '[Index]', `getSync unexpected error: ${e}`)
     }
   }
 }
