@@ -35,7 +35,7 @@ struct InstalledPWAs {
   
   openPWA(url: string) {
     router.pushUrl({
-      url: 'pages/Index',
+      url: 'pages/PWABrowser',
       params: {
         pwaUrl: url
       }
@@ -50,7 +50,7 @@ struct InstalledPWAs {
     Column() {
       // Header
       Row() {
-        Button('← Back to Store')
+        Button('← Back to Browser')
           .onClick(() => this.navigateToStore())
           .backgroundColor('#007AFF')
           .fontColor(Color.White)
@@ -97,13 +97,13 @@ struct InstalledPWAs {
             .fontWeight(FontWeight.Medium)
             .margin({ top: 16 })
           
-          Text('Visit the PWA Store to discover and install Progressive Web Apps')
+          Text('Visit the PWA Browser to discover and install Progressive Web Apps')
             .fontSize(14)
             .fontColor('#666666')
             .textAlign(TextAlign.Center)
             .margin({ top: 8, left: 24, right: 24 })
           
-          Button('Go to Store')
+          Button('Go to Browser')
             .onClick(() => this.navigateToStore())
             .backgroundColor('#007AFF')
             .fontColor(Color.White)

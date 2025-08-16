@@ -38,7 +38,7 @@ struct Index {
       this.loadPWAInfo(params.pwaUrl);
     } else {
       // Default behavior - navigate to PWA Store
-      this.navigateToPWAStore();
+      this.navigateToPWABrowser();
     }
   }
   
@@ -48,9 +48,9 @@ struct Index {
     this.currentPWAInfo = installedPWAs.find(pwa => pwa.url === url) || null;
   }
   
-  navigateToPWAStore() {
+  navigateToPWABrowser() {
     router.replaceUrl({
-      url: 'pages/PWAStore'
+      url: 'pages/PWABrowser'
     });
   }
   
@@ -70,19 +70,19 @@ struct Index {
             .height(120)
             .margin({ top: 80, bottom: 40 })
           
-          Text('PWA Store')
+          Text('PWA Browser')
             .fontSize(28)
             .fontWeight(FontWeight.Bold)
             .margin({ bottom: 16 })
           
-          Text('Discover and manage Progressive Web Apps')
+          Text('Browse the web and discover Progressive Web Apps')
             .fontSize(16)
             .fontColor('#666666')
             .textAlign(TextAlign.Center)
             .margin({ bottom: 40, left: 32, right: 32 })
           
-          Button('Open PWA Store')
-            .onClick(() => this.navigateToPWAStore())
+          Button('Open PWA Browser')
+            .onClick(() => this.navigateToPWABrowser())
             .backgroundColor('#007AFF')
             .fontColor(Color.White)
             .fontSize(18)
@@ -135,7 +135,7 @@ struct Index {
         .width('100%')
 
         /* Load PWA URL */
-        Web({ src: this.currentUrl || 'https://2048.love2dev.com/', controller: this.controller })
+        Web({ src: this.currentUrl, controller: this.controller })
           .zoomAccess(false)
           .mediaPlayGestureAccess(true)
           .horizontalScrollBarAccess(false)

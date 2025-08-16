@@ -1,7 +1,7 @@
 {
   "src": [
     "pages/Index",
-    "pages/PWAStore",
+    "pages/PWABrowser",
     "pages/InstalledPWAs"
   ]
 }

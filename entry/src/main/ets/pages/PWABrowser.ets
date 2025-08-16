@@ -85,7 +85,7 @@ struct PWABrowser {
     this.currentUrl = url;
     this.urlInput = url;
     this.showingPWA = true;
-    this.controller.loadUrl(url);
+    // Don't call controller.loadUrl here - let the Web component handle the URL change
   }
   
   navigateToUrl() {
@@ -95,7 +95,7 @@ struct PWABrowser {
     }
     this.currentUrl = url;
     this.showingPWA = true;
-    this.controller.loadUrl(url);
+    // Don't call controller.loadUrl here - let the Web component handle the URL change
   }
   
   returnToMainPage() {
