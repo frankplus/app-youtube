@@ -15,7 +15,6 @@ struct PWABrowser {
   @State showInstallButton: boolean = false;
   @State currentPWAInfo: PWAInfo | null = null;
   @State isLoading: boolean = false;
-  @State currentUrl: string = '';
   @State urlInput: string = '';
   @State showingWebView: boolean = false;
   @State installedPWAs: PWAInfo[] = [];
@@ -89,9 +88,15 @@ struct PWABrowser {
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       url = 'https://' + url;
     }
-    this.currentUrl = url;
-    this.showingWebView = true;
-    // Don't call controller.loadUrl here - let the Web component handle the URL change
+    this.urlInput = url; // Update input with the processed URL
+    
+    // If already showing web view, navigate to the new URL
+    if (this.showingWebView && this.controller) {
+      this.controller.loadUrl(url);
+    } else {
+      // First time showing web view
+      this.showingWebView = true;
+    }
   }
   
   returnToMainPage() {
@@ -150,45 +155,64 @@ struct PWABrowser {
   
   build() {
     Column() {
+      // Unified header for both modes
+      Row() {
+        if (this.showingWebView) {
+          Button('← Back')
+            .onClick(() => this.returnToMainPage())
+            .backgroundColor('#007AFF')
+            .fontColor(Color.White)
+            .margin({ left: 8 })
+        }
+        
+        // URL bar
+        TextInput({
+          placeholder: this.showingWebView ? 'Enter new URL...' : 'Enter URL or search...',
+          text: this.urlInput
+        })
+          .onChange((value: string) => {
+            this.urlInput = value;
+          })
+          .onSubmit(() => {
+            this.navigateToUrl();
+          })
+          .layoutWeight(1)
+          .margin({ left: 8, right: 8 })
+          .fontSize(14)
+        
+        // Install PWA button
+        if (this.showInstallButton && this.currentPWAInfo && this.showingWebView) {
+          Button(this.isLoading ? 'Installing...' : 'Install')
+            .onClick(() => this.installCurrentPWA())
+            .enabled(!this.isLoading)
+            .backgroundColor('#34C759')
+            .fontColor(Color.White)
+            .fontSize(12)
+            .margin({ right: 8 })
+        }
+        
+        // Reload/Go button
+        if (this.showingWebView) {
+          Button('Reload')
+            .onClick(() => this.controller.refresh())
+            .fontSize(12)
+            .margin({ right: 8 })
+        } else {
+          Button('Go')
+            .onClick(() => this.navigateToUrl())
+            .backgroundColor('#007AFF')
+            .fontColor(Color.White)
+            .fontSize(12)
+            .margin({ right: 8 })
+        }
+      }
+      .backgroundColor('#f5f5f5')
+      .width('100%')
+      .padding({ top: 8, bottom: 8 })
+
       if (!this.showingWebView) {
-        // Main browser page with URL bar and installed PWAs
+        // Main browser page with installed PWAs
         Column() {
-          // Header
-          Row() {
-            Text('PWA Browser')
-              .fontSize(18)
-              .fontWeight(FontWeight.Medium)
-              .padding(12)
-            
-            Blank()
-          }
-          .backgroundColor('#f5f5f5')
-          .width('100%')
-          
-          // URL bar
-          Row() {
-            TextInput({
-              placeholder: 'Enter URL or search...',
-              text: this.urlInput
-            })
-              .onChange((value: string) => {
-                this.urlInput = value;
-              })
-              .onSubmit(() => {
-                this.navigateToUrl();
-              })
-              .layoutWeight(1)
-              .margin({ right: 8 })
-            
-            Button('Go')
-              .onClick(() => this.navigateToUrl())
-              .backgroundColor('#007AFF')
-              .fontColor(Color.White)
-          }
-          .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-          .backgroundColor('#ffffff')
-          .width('100%')
-          
           // Installed PWAs section
           Column() {
             Row() {
@@ -297,47 +321,9 @@ struct PWABrowser {
           .width('100%')
           .layoutWeight(1)
         }
-        .height('100%')
       } else {
         // Web browsing mode
         Column() {
-          // Header for browsing mode
-          Row() {
-            Button('← Back')
-              .onClick(() => this.returnToMainPage())
-              .backgroundColor('#007AFF')
-              .fontColor(Color.White)
-              .margin({ left: 8 })
-            
-            Column() {
-              Text(this.currentUrl)
-                .fontSize(14)
-                .maxLines(1)
-                .textOverflow({ overflow: TextOverflow.Ellipsis })
-                .fontColor('#666666')
-            }
-            .padding(12)
-            .layoutWeight(1)
-            
-            // Install PWA button
-            if (this.showInstallButton && this.currentPWAInfo) {
-              Button(this.isLoading ? 'Installing...' : 'Install')
-                .onClick(() => this.installCurrentPWA())
-                .enabled(!this.isLoading)
-                .backgroundColor('#34C759')
-                .fontColor(Color.White)
-                .fontSize(12)
-                .margin({ right: 8 })
-            }
-            
-            Button('Reload')
-              .onClick(() => this.controller.refresh())
-              .fontSize(12)
-              .margin({ right: 8 })
-          }
-          .backgroundColor('#f5f5f5')
-          .width('100%')
-          
           // PWA install notification
           if (this.showInstallButton && this.currentPWAInfo) {
             Row() {
@@ -352,7 +338,7 @@ struct PWABrowser {
           
           // Web view
           Web({ 
-            src: this.currentUrl, 
+            src: this.urlInput, 
             controller: this.controller 
           })
             .zoomAccess(true)
@@ -370,8 +356,18 @@ struct PWABrowser {
               methodList: ["onPWADetected"],
               controller: this.controller,
             })
+            .onPageBegin((event) => {
+              if (event?.url) {
+                this.urlInput = event.url;
+              }
+            })
             .onPageEnd((event) => {
               hilog.info(0x0, '[PWABrowser]', `onPageEnd= ${JSON.stringify(event)}`);
+              
+              // Update URL in case it changed during navigation
+              if (event?.url) {
+                this.urlInput = event.url;
+              }
               
               // Inject PWA detection script
               this.controller.runJavaScript(this.pwaDetectionScript)
@@ -383,7 +379,7 @@ struct PWABrowser {
             .layoutWeight(1)
             .backgroundColor('#ffffff')
         }
-        .height('100%')
+        .layoutWeight(1)
       }
     }
     .height('100%')
