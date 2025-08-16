@@ -179,7 +179,7 @@ struct InstalledPWAs {
                     .backgroundColor('#34C759')
                     .fontColor(Color.White)
                     .fontSize(12)
-                    .width(60)
+                    .width(90)
                     .height(32)
                   
                   Button('Remove')
@@ -187,7 +187,7 @@ struct InstalledPWAs {
                     .backgroundColor('#FF3B30')
                     .fontColor(Color.White)
                     .fontSize(12)
-                    .width(60)
+                    .width(90)
                     .height(32)
                     .margin({ top: 8 })
                 }

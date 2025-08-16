@@ -1,6 +1,7 @@
 import { preferences } from '@kit.ArkData';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { Context } from '@kit.AbilityKit';
+import { url } from '@kit.ArkTS';
 
 export interface PWAInfo {
   name: string;
@@ -79,5 +80,24 @@ export class PWAManager {
   async isPWAInstalled(context: Context, url: string): Promise<boolean> {
     const installedPWAs = await this.getInstalledPWAs(context);
     return installedPWAs.some(pwa => pwa.url === url);
+  }
+
+  /**
+   * Check if a URL belongs to the same domain as the PWA
+   * @param pwaUrl The original PWA URL
+   * @param currentUrl The current URL to check
+   * @returns true if the URL is within the PWA domain, false otherwise
+   */
+  isUrlInPWADomain(pwaUrl: string, currentUrl: string): boolean {
+    try {
+      const pwaUrlObj = url.URL.parseURL(pwaUrl);
+      const currentUrlObj = url.URL.parseURL(currentUrl);
+      
+      // Check if the domains match (including subdomains)
+      return pwaUrlObj.hostname === currentUrlObj.hostname;
+    } catch (error) {
+      console.error('Error parsing URLs:', error);
+      return false;
+    }
   }
 }

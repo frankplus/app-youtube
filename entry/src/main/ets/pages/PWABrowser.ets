@@ -61,6 +61,13 @@ struct PWABrowser {
   aboutToAppear() {
     webview.WebviewController.initializeWebEngine();
     this.loadInstalledPWAs();
+    
+    // Check if we have an initial URL to navigate to (e.g., from PWAViewer)
+    const params = router.getParams() as Record<string, string>;
+    if (params && params.initialUrl) {
+      this.urlInput = params.initialUrl;
+      this.showingWebView = true;
+    }
   }
   
   async loadInstalledPWAs() {

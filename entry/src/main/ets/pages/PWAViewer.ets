@@ -104,6 +104,37 @@ struct PWAViewer {
         .onPageBegin((event) => {
           hilog.info(0x0, '[PWAViewer]', `onPageBegin= ${JSON.stringify(event)}`)
         })
+        .onUrlLoadIntercept((event) => {
+          hilog.info(0x0, '[PWAViewer]', `onUrlLoadIntercept= ${JSON.stringify(event)}`)
+          
+          if (event?.data && this.currentUrl) {
+            let requestedUrl: string = '';
+            
+            // Handle both string and WebResourceRequest types
+            if (typeof event.data === 'string') {
+              requestedUrl = event.data;
+            }
+            
+            // Check if the requested URL is outside the PWA domain
+            if (requestedUrl && !this.pwaManager.isUrlInPWADomain(this.currentUrl, requestedUrl)) {
+              hilog.info(0x0, '[PWAViewer]', `External URL detected: ${requestedUrl}, redirecting to PWABrowser`)
+              
+              // Navigate to PWABrowser with the external URL
+              router.pushUrl({
+                url: 'pages/PWABrowser',
+                params: {
+                  initialUrl: requestedUrl
+                }
+              });
+              
+              // Prevent the current webview from loading the external URL
+              return true;
+            }
+          }
+          
+          // Allow normal navigation for URLs within the PWA domain
+          return false;
+        })
         .onPageEnd((event) => {
           hilog.info(0x0, '[PWAViewer]', `onPageEnd= ${JSON.stringify(event)}`)
           // register browser object
