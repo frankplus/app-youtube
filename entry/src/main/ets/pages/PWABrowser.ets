@@ -270,7 +270,7 @@ struct PWABrowser {
             } else {
               // PWA grid
               Grid() {
-                ForEach(this.installedPWAs.slice(0, 6), (pwa: PWAInfo, index: number) => {
+                ForEach(this.installedPWAs, (pwa: PWAInfo, index: number) => {
                   GridItem() {
                     Column() {
                       // PWA Icon
