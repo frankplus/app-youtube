@@ -35,7 +35,7 @@ struct InstalledPWAs {
   
   openPWA(url: string) {
     router.pushUrl({
-      url: 'pages/PWABrowser',
+      url: 'pages/PWAViewer',
       params: {
         pwaUrl: url
       }

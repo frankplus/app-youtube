@@ -15,9 +15,9 @@ struct PWABrowser {
   @State showInstallButton: boolean = false;
   @State currentPWAInfo: PWAInfo | null = null;
   @State isLoading: boolean = false;
-  @State currentUrl: string = 'https://www.findpwa.com/';
-  @State urlInput: string = 'https://www.findpwa.com/';
-  @State showingPWA: boolean = false;
+  @State currentUrl: string = '';
+  @State urlInput: string = '';
+  @State showingWebView: boolean = false;
   @State installedPWAs: PWAInfo[] = [];
   @State isLoadingPWAs: boolean = true;
   
@@ -62,12 +62,6 @@ struct PWABrowser {
   aboutToAppear() {
     webview.WebviewController.initializeWebEngine();
     this.loadInstalledPWAs();
-    
-    // Check if we're opening a specific PWA
-    const params = router.getParams() as Record<string, string>;
-    if (params && params.pwaUrl) {
-      this.openPWADirectly(params.pwaUrl);
-    }
   }
   
   async loadInstalledPWAs() {
@@ -81,11 +75,13 @@ struct PWABrowser {
     this.isLoadingPWAs = false;
   }
   
-  openPWADirectly(url: string) {
-    this.currentUrl = url;
-    this.urlInput = url;
-    this.showingPWA = true;
-    // Don't call controller.loadUrl here - let the Web component handle the URL change
+  openPWA(url: string) {
+    router.pushUrl({
+      url: 'pages/PWAViewer',
+      params: {
+        pwaUrl: url
+      }
+    });
   }
   
   navigateToUrl() {
@@ -94,12 +90,12 @@ struct PWABrowser {
       url = 'https://' + url;
     }
     this.currentUrl = url;
-    this.showingPWA = true;
+    this.showingWebView = true;
     // Don't call controller.loadUrl here - let the Web component handle the URL change
   }
   
   returnToMainPage() {
-    this.showingPWA = false;
+    this.showingWebView = false;
     this.showInstallButton = false;
     this.currentPWAInfo = null;
     this.loadInstalledPWAs(); // Refresh installed PWAs list
@@ -154,7 +150,7 @@ struct PWABrowser {
   
   build() {
     Column() {
-      if (!this.showingPWA) {
+      if (!this.showingWebView) {
         // Main browser page with URL bar and installed PWAs
         Column() {
           // Header
@@ -286,7 +282,7 @@ struct PWABrowser {
                       offsetY: 1
                     })
                     .onClick(() => {
-                      this.openPWADirectly(pwa.url);
+                      this.openPWA(pwa.url);
                     })
                   }
                 })
@@ -303,9 +299,9 @@ struct PWABrowser {
         }
         .height('100%')
       } else {
-        // PWA viewing mode
+        // Web browsing mode
         Column() {
-          // Header for PWA mode
+          // Header for browsing mode
           Row() {
             Button('← Back')
               .onClick(() => this.returnToMainPage())
@@ -314,17 +310,11 @@ struct PWABrowser {
               .margin({ left: 8 })
             
             Column() {
-              if (this.currentPWAInfo) {
-                Text(this.currentPWAInfo.name)
-                  .fontSize(16)
-                  .fontWeight(FontWeight.Medium)
-                  .maxLines(1)
-                  .textOverflow({ overflow: TextOverflow.Ellipsis })
-              } else {
-                Text('Web App')
-                  .fontSize(16)
-                  .fontWeight(FontWeight.Medium)
-              }
+              Text(this.currentUrl)
+                .fontSize(14)
+                .maxLines(1)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
+                .fontColor('#666666')
             }
             .padding(12)
             .layoutWeight(1)
